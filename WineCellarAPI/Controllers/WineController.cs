@@ -1,7 +1,9 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Common.Models;
-using Services;
+using Common.Enums;
+using Services.Interfaces;
+using Microsoft.AspNetCore.Authorization;
 
 namespace WineCellarApi.Controllers
 {
@@ -9,15 +11,28 @@ namespace WineCellarApi.Controllers
     [ApiController]
     public class WineController : ControllerBase
     {
-        public readonly IWineServices _wineServices;
-        public WineController(IWineServices wineServices)
+        public readonly IWineService _wineServices;
+        public WineController(IWineService wineServices)
         {
             _wineServices = wineServices;
         }
 
+        [HttpGet]
+        [Route("WineStock")]
+        public IActionResult GetAvailableWines([FromQuery] Variety? variety)
+        {
+            if (variety.HasValue)
+            {
+                return Ok(_wineServices.GetWinesByVariety(variety.Value));
+            }
+
+            return Ok(_wineServices.GetAvailableWines());
+        }
+
         [HttpPost]
         [Route("Wine")]
-        public IActionResult AddWine([FromBody] CreateWineDTO wineDTO)
+        [Authorize]
+        public IActionResult CreateWine([FromBody] CreateWineDTO wineDTO)
         {
             if (wineDTO == null)
             {
@@ -25,7 +40,7 @@ namespace WineCellarApi.Controllers
             }
             try
             {
-                _wineServices.AddWine(wineDTO);
+                _wineServices.CreateWine(wineDTO);
             }
             catch (InvalidOperationException)
             {
@@ -34,11 +49,13 @@ namespace WineCellarApi.Controllers
             return Created("Location", "Resource");
         }
 
-        [HttpGet]
-        [Route("WineStock")]
-        public IActionResult GetAllWinesStock()
+        [HttpPut]
+        [Route("Wine/{id}")]
+        [Authorize]
+        public IActionResult UpdateWineStock(int id, [FromBody] int stock)
         {
-            return Ok(_wineServices.GetAllWinesStock());
+            _wineServices.UpdateWineStockById(id, stock);
+            return Ok();
         }
     }
 }

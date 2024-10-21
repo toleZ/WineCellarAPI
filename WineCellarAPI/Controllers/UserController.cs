@@ -1,7 +1,8 @@
 ﻿using Common.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Services;
+using Services.Interfaces;
 
 namespace WineCellarApi.Controllers
 {
@@ -9,14 +10,15 @@ namespace WineCellarApi.Controllers
     [ApiController]
     public class UserController : ControllerBase
     {
-        public readonly IUserServices _userServices;
-        public UserController(IUserServices userServices)
+        public readonly IUserService _userServices;
+        public UserController(IUserService userServices)
         {
             _userServices = userServices;
         }
         [HttpPost]
         [Route("User")]
-        public IActionResult AddUser([FromBody] CreateUserDTO userDTO)
+        [Authorize]
+        public IActionResult CreateUser([FromBody] CreateUserDTO userDTO)
         {
             if (userDTO == null)
             {
@@ -24,7 +26,7 @@ namespace WineCellarApi.Controllers
             }
             try
             {
-                _userServices.AddUser(userDTO);
+                _userServices.CreateUser(userDTO);
             }
             catch (InvalidOperationException)
             {
